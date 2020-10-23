@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.HomeActivity"
+    android:background="@drawable/background_image">
+
+    <Button
+        android:id="@+id/settings_button"
+        android:layout_width="33dp"
+        android:layout_height="34dp"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/settings_vector_icon"
+        app:layout_constraintHorizontal_bias="0.923"
+        app:layout_constraintStart_toEndOf="@+id/weather_condition_text_view"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginLeft="100dp"/>
+
+    <TextView
+        android:id="@+id/weather_condition_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/weekly_overview_button"
+        android:background="@drawable/weather_condition_header"/>
+
+    <ImageView
+        android:id="@+id/small_arrow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="37dp"
+        android:src="@drawable/small_arrow"
+        app:layout_constraintStart_toEndOf="@+id/feels_like_header"
+        app:layout_constraintTop_toBottomOf="@+id/weather_condition_text_view" />
+
+    <ImageView
+        android:id="@+id/small_arrow_two"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:src="@drawable/small_arrow"
+        app:layout_constraintStart_toEndOf="@+id/temp_min_header"
+        app:layout_constraintTop_toBottomOf="@+id/small_arrow" />
+
+    <ImageView
+        android:id="@+id/small_arrow_three"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:src="@drawable/small_arrow"
+        app:layout_constraintStart_toEndOf="@+id/temp_max_header"
+        app:layout_constraintTop_toBottomOf="@+id/small_arrow_two" />
+
+    <ImageView
+        android:id="@+id/small_arrow_four"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:src="@drawable/small_arrow"
+        app:layout_constraintStart_toEndOf="@+id/humidity_header"
+        app:layout_constraintTop_toBottomOf="@+id/small_arrow_three" />
+
+    <TextView
+        android:id="@+id/feels_like_holder"
+        android:layout_width="wrap_content"
+        android:layout_height="25dp"
+        android:layout_marginStart="48dp"
+        android:layout_marginTop="28dp"
+        android:gravity="center"
+        android:text="25°C"
+        android:textSize="14sp"
+        app:layout_constraintStart_toEndOf="@+id/small_arrow"
+        app:layout_constraintTop_toBottomOf="@+id/weather_condition_text_view" />
+
+    <TextView
+    android:id="@+id/temp_min_holder"
+    android:layout_width="wrap_content"
+    android:layout_height="25dp"
+    android:layout_marginStart="48dp"
+    android:layout_marginTop="2dp"
+    android:gravity="center"
+    android:text="25°C"
+    android:textSize="14sp"
+    app:layout_constraintStart_toEndOf="@+id/small_arrow_two"
+    app:layout_constraintTop_toBottomOf="@+id/feels_like_holder" />
+
+    <TextView
+        android:id="@+id/temp_max_holder"
+        android:layout_width="wrap_content"
+        android:layout_height="25dp"
+        android:layout_marginStart="48dp"
+        android:layout_marginTop="5dp"
+        android:gravity="center"
+        android:text="25°C"
+        android:textSize="14sp"
+        app:layout_constraintStart_toEndOf="@+id/small_arrow_two"
+        app:layout_constraintTop_toBottomOf="@+id/temp_min_holder" />
+
+    <TextView
+        android:id="@+id/humidity_holder"
+        android:layout_width="wrap_content"
+        android:layout_height="25dp"
+        android:layout_marginStart="48dp"
+        android:layout_marginTop="5dp"
+        android:gravity="center"
+        android:text="25°C"
+        android:textSize="14sp"
+        app:layout_constraintStart_toEndOf="@+id/small_arrow_two"
+        app:layout_constraintTop_toBottomOf="@+id/temp_max_holder" />
+
+
+    <ImageView
+        android:id="@+id/feels_like_header"
+        android:layout_width="99dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="250dp"
+        android:layout_marginTop="28dp"
+        android:src="@drawable/feels_like_header"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/weather_condition_text_view" />
+
+
+    <ImageView
+        android:id="@+id/humidity_header"
+        android:layout_width="99dp"
+        android:layout_height="wrap_content"
+        android:src="@drawable/humidity_header"
+        android:layout_marginLeft="250dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/temp_max_header" />
+
+    <ImageView
+        android:id="@+id/temp_max_header"
+        android:layout_width="99dp"
+        android:layout_height="wrap_content"
+        android:src="@drawable/temp_max_header"
+        android:layout_marginLeft="250dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/temp_min_header" />
+
+    <ImageView
+        android:id="@+id/temp_min_header"
+        android:layout_width="99dp"
+        android:layout_height="wrap_content"
+        android:src="@drawable/temp_min_header"
+        android:layout_marginLeft="250dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/feels_like_header" />
+
+    <TextView
+        android:id="@+id/temperature_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="50°C"
+        android:textSize="36sp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/humidity_header" />
+
+    <TextView
+        android:id="@+id/city_header_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/city_header"
+        android:padding="10dp"
+        android:layout_marginTop="10dp"
+        android:textAlignment="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/temperature_text_view"/>
+
+    <Button
+        android:id="@+id/weekly_overview_button"
+        android:layout_width="134dp"
+        android:layout_height="33dp"
+        android:background="@drawable/weekly_overview_button"
+        android:layout_marginTop="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:text="weekly overview"
+        android:textSize="12sp"
+        android:textColor="@color/descriptionTextColor"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/temperature_image_view"
+        android:layout_width="241dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/sunny_image"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/city_header_text_view" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

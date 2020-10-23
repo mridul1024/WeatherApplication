@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="preference_entries">
+        <item>@string/unit_one</item>
+        <item>@string/unit_two</item>
+    </array>
+
+    <array name="preference_values">
+        <item>@string/value_unit_one</item>
+        <item>@string/value_unit_two</item>
+    </array>
+</resources>

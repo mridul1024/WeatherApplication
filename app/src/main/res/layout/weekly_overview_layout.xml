@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="508dp"
+    android:background="@drawable/weekly_overview_background">
+
+    <RelativeLayout
+        android:id="@+id/weekly_overview_relative_layout"
+        android:layout_width="296dp"
+        android:layout_height="367dp"
+        android:background="@drawable/weekly_writing_pad"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/monday_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="200dp"
+            android:layout_marginTop="60dp"
+            android:text="20" />
+
+        <TextView
+            android:id="@+id/tuesday_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/monday_text_view"
+            android:layout_marginLeft="200dp"
+            android:layout_marginTop="16dp"
+            android:text="20" />
+
+        <TextView
+            android:id="@+id/wednesday_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tuesday_text_view"
+            android:layout_marginLeft="200dp"
+            android:layout_marginTop="15dp"
+            android:text="20" />
+
+        <TextView
+            android:id="@+id/thursday_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/wednesday_text_view"
+            android:layout_marginLeft="200dp"
+            android:layout_marginTop="15dp"
+            android:text="20" />
+
+        <TextView
+            android:id="@+id/friday_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/thursday_text_view"
+            android:layout_marginLeft="200dp"
+            android:layout_marginTop="15dp"
+            android:text="20" />
+
+        <TextView
+            android:id="@+id/saturday_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/friday_text_view"
+            android:layout_marginLeft="200dp"
+            android:layout_marginTop="15dp"
+            android:text="20" />
+
+        <TextView
+            android:id="@+id/sunday_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/saturday_text_view"
+            android:layout_marginLeft="200dp"
+            android:layout_marginTop="15dp"
+            android:text="20" />
+
+    </RelativeLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

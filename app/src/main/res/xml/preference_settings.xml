@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ListPreference
+        android:key="@string/preference_list_key"
+        android:title="Units"
+        android:defaultValue="@string/preference_default_value"
+        android:summary="Set the temperature label"
+        android:entries="@array/preference_entries"
+        android:entryValues="@array/preference_values"
+        app:icon="@drawable/units_icon"
+        app:allowDividerBelow="true"
+        />
+
+    <SwitchPreferenceCompat
+        android:key="@string/notification_preference_key"
+        android:title="Notifications"
+        android:icon="@drawable/notification_icon"
+        android:defaultValue="@string/notification_preference_default_value"
+        app:allowDividerBelow="true"/>
+
+</androidx.preference.PreferenceScreen>

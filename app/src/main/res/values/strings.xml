@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">WeatherApplication</string>
+
+    <!--    API_KEY-->
+    <string name="api_key">e4c20ba5b57d2510f44502ce1da3686d</string>
+    <string name="base_url">https://api.openweathermap.org/data/2.5/</string>
+
+<!--    PREFERENCE ITEM KEYS-->
+    <string name="preference_list_key">TEMPERATURE_UNIT</string>
+    <string name="notification_preference_key">NOTIFICATION_SWITCH</string>
+<!--    SETTINGS ENTRIES-->
+    <string name="unit_one">Celsius</string>
+    <string name="unit_two">Fahrenheit</string>
+<!--    SETTINGS ENTRY VALUES-->
+    <string name="preference_default_value">metric</string>
+    <string name="value_unit_one">metric</string>
+    <string name="value_unit_two">imperial</string>
+    <string name="notification_preference_default_value">false</string>
+
+
+</resources>
