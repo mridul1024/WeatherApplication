@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
- * Generic class for handling upstream errors in RxJava and stops it for propagating to main thread
+ * Generic class for handling upstream errors in RxJava and stops it from propagating to main thread
  * @param <T>
  */
 public final class DataState<T> {

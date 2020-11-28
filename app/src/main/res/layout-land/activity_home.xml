@@ -7,6 +7,16 @@
     tools:context=".ui.HomeActivity"
     android:background="@drawable/background_image">
 
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:elevation="10dp"
+        android:layout_width="142dp"
+        android:layout_height="142dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <Button
         android:id="@+id/settings_button"
         android:layout_width="33dp"

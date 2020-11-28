@@ -1,13 +1,16 @@
 package com.example.weatherapplication.ui;
 
 import android.Manifest;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
-import android.content.ComponentName;
+import android.app.AlarmManager;
+import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -16,8 +19,6 @@ import android.net.Network;
 import android.net.NetworkRequest;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.PersistableBundle;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,29 +27,31 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.res.ResourcesCompat;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
 import com.example.weatherapplication.R;
+import com.example.weatherapplication.broadcastReceiver.WeatherNotificationReceiver;
 import com.example.weatherapplication.di.viewmodel_module.ViewModelFactory;
 import com.example.weatherapplication.fragments.WeeklyOverviewDialog;
-import com.example.weatherapplication.listeners.LocationChangeListener;
+import com.example.weatherapplication.listeners.PositionInterface;
 import com.example.weatherapplication.listeners.NetworkChangeListener;
 import com.example.weatherapplication.network.model.DataModel;
 import com.example.weatherapplication.network.model.weekly.DataModelWeekly;
-import com.example.weatherapplication.services.NotificationService;
 import com.example.weatherapplication.utils.ConnectivityStatus;
 import com.example.weatherapplication.utils.TaskHandler;
 import com.example.weatherapplication.viewmodel.WeatherViewModel;
 import com.example.weatherapplication.viewmodel.WeeklyWeatherViewModel;
 
-import java.util.List;
+import java.util.Calendar;
 
 import javax.inject.Inject;
 
@@ -57,15 +60,19 @@ import dagger.android.support.DaggerAppCompatActivity;
 
 public class HomeActivity extends DaggerAppCompatActivity
         implements
-        NetworkChangeListener, LocationChangeListener,
+        NetworkChangeListener, PositionInterface,
         WeeklyOverviewDialog.PassWeeklyData,
-        SharedPreferences.OnSharedPreferenceChangeListener {
+        SharedPreferences.OnSharedPreferenceChangeListener,
+        LocationListener {
 
     private static final String TAG = "HomeActivity";
 
-    private static final String NOTIFICATION_MESSAGE = "notification_message_key";
+    private Toast toastMessage;
+
     private static final String JOB_FLAG = "job_flag_key";
     private static final String UNITS_FLAG = "units_flag_key";
+
+    private static final int PENDING_INTENT_REQUEST_CODE = 5;
 
     private String mUnits;
     private boolean mNotificationSwitch;
@@ -74,6 +81,10 @@ public class HomeActivity extends DaggerAppCompatActivity
     private WeeklyWeatherViewModel mWeeklyWeatherViewModel;
 
     private WeeklyOverviewDialog mWeeklyOverviewDialog;
+
+    private AlarmManager alarmManager;
+    private Intent alarmIntent;
+    private PendingIntent pendingIntent;
 
     @Inject
     ViewModelFactory mViewModelFactory;
@@ -100,16 +111,23 @@ public class HomeActivity extends DaggerAppCompatActivity
     private TaskHandler mTaskHandler;
     private Handler mHandler;
 
+    private ActivityResultLauncher<String> requestPermissionLauncher;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+        Log.d(TAG, "onCreate: oncreate");
         init();
         setupSharedPreference();
         getLocation();
         checkInternetConnectivity();
+
+        if(mNotificationSwitch){
+            setNotificationAlarm();
+        }
 
         mHandler = new Handler();
         mHandler.postDelayed(new Runnable() {
@@ -117,11 +135,14 @@ public class HomeActivity extends DaggerAppCompatActivity
             public void run() {
                 initObserver();
                 initWeeklyObserver();
-                serviceInitializer();
             }
         }, 2000);
+
     }
 
+    /**
+     * Function which is used to initialize all the widgets in the layout file
+     */
     public void init() {
         mProgressBar = findViewById(R.id.progress_bar);
         mTemperature = findViewById(R.id.temperature_text_view);
@@ -162,6 +183,9 @@ public class HomeActivity extends DaggerAppCompatActivity
         startActivity(settingsIntent);
     }
 
+    /**
+     * Function to register a shared preference listener for the whole runtime of the application
+     */
     public void setupSharedPreference(){
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mUnits = sharedPreferences.getString(getString(R.string.preference_list_key),getString(R.string.preference_default_value));
@@ -186,27 +210,28 @@ public class HomeActivity extends DaggerAppCompatActivity
 
     public void showProgressBar(){
         mProgressBar.setVisibility(View.VISIBLE);
+        mProgressBar.setElevation(10);
     }
 
     public void hideProgressBar(){
-        mProgressBar.setVisibility(View.GONE);
+        mProgressBar.setVisibility(View.INVISIBLE);
     }
 
     /**
-     * Observer function to observe ViewModel which is used for fetching current weather
+     * Two Observer function to observe ViewModel which is used for fetching current weather (For both weekly and daily data)
      */
     public void initObserver() {
         Log.d(TAG, "initObserver: called observer");
-        showProgressBar();
         if (mConnectionStatus.equals(ConnectivityStatus.CONNECTED)) {
             if(mUnits == null){
                 mUnits = "metric";
             }
+
             mWeatherViewModel.getData(latitude, longitude, mUnits).observe(this, new Observer<DataModel>() {
                 @Override
                 public void onChanged(DataModel dataModel) {
                     Log.d(TAG, "onChanged: entered onChange block");
-                    hideProgressBar();
+                    showProgressBar();
                     displayWeatherData(
                             dataModel.getMain().getTemp().toString(),
                             dataModel.getMain().getFeelsLike().toString(),
@@ -218,8 +243,11 @@ public class HomeActivity extends DaggerAppCompatActivity
                     );
 
                     displayWeatherImage(dataModel.getWeather().get(0).getMain());
+                    hideProgressBar();
+
                 }
             });
+
         }
     }
 
@@ -230,6 +258,7 @@ public class HomeActivity extends DaggerAppCompatActivity
             if(mUnits == null){
                 mUnits = "metric";
             }
+
             mWeeklyWeatherViewModel.getWeeklyData(latitude, longitude, mUnits).observe(this, new Observer<DataModelWeekly>() {
                 @Override
                 public void onChanged(DataModelWeekly dataModelWeekly) {
@@ -243,6 +272,8 @@ public class HomeActivity extends DaggerAppCompatActivity
                     mSunday = dataModelWeekly.getDaily().get(7).getTemp().getDay();
                 }
             });
+
+
         }
     }
 
@@ -286,19 +317,20 @@ public class HomeActivity extends DaggerAppCompatActivity
         mHumidity.setText(humidityString);
         mCityHeader.setText(cityheaderString);
         mWeatherCondition.setText(weatherConditionString);
+
     }
 
     public void displayWeatherImage(String weatherCondition){
-        //Rain, Drizzle, Thunderstorm
-        if(weatherCondition.equals("Rain")||weatherCondition.equals("Drizzle")||weatherCondition.equals("Thunderstorm")){
-            mTemperatureImageView.setImageResource(R.drawable.rain_image);
-        }
-        else if(weatherCondition.equals("Snow")){
-            mTemperatureImageView.setImageResource(R.drawable.snow_image);
-        }
-        else{
-            mTemperatureImageView.setImageResource(R.drawable.sunny_image);
-        }
+            //Rain, Drizzle, Thunderstorm
+            if(weatherCondition.equals("Rain")||weatherCondition.equals("Drizzle")||weatherCondition.equals("Thunderstorm")){
+                mTemperatureImageView.setImageResource(R.drawable.rain_image);
+            }
+            else if(weatherCondition.equals("Snow")){
+                mTemperatureImageView.setImageResource(R.drawable.snow_image);
+            }
+            else{
+                mTemperatureImageView.setImageResource(R.drawable.sunny_image);
+            }
     }
 
     /**
@@ -334,6 +366,7 @@ public class HomeActivity extends DaggerAppCompatActivity
                         super.onUnavailable();
                         displayToast("No internet connection available");
                         mConnectionStatus = ConnectivityStatus.NO_INTERNET;
+                        showNetworkAlertDialog();
                     }
                 };
             }
@@ -341,9 +374,34 @@ public class HomeActivity extends DaggerAppCompatActivity
         mTaskHandler.submit(task);
     }
 
+    public void showNetworkAlertDialog(){
+        AlertDialog.Builder networkAlertDialog = new AlertDialog.Builder(this);
+        networkAlertDialog.setTitle("No internet connection!");
+        networkAlertDialog.setMessage("Connect to the internet and retry or exit app");
+        networkAlertDialog.setPositiveButton("Retry", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                finish();
+                startActivity(getIntent());
+            }
+        });
+        networkAlertDialog.setNegativeButton("Exit", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                finish();
+                System.exit(0);
+            }
+        });
+
+        networkAlertDialog.show();
+    }
+
     public void displayToast(String message) {
-        Log.d(TAG, "displayToast: toast called - " + message.trim());
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        if (toastMessage != null) {
+            toastMessage.cancel();
+        }
+        toastMessage = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+        toastMessage.show();
     }
 
 
@@ -360,14 +418,15 @@ public class HomeActivity extends DaggerAppCompatActivity
             } else {
                 Log.d(TAG, "getLocation: first if block");
                 Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                if (location == null) {
-                    Log.d(TAG, "getLocation: location is null");
+                if(location != null) {
+
+                    latitude = location.getLatitude();
+                    longitude = location.getLongitude();
+                    Log.d(TAG, "getLocation: " + "latitude: " + location.getLatitude() + " longitude: " + location.getLongitude());
                 }
-                displayToast("latitude: " + location.getLatitude() + " longitude: " + location.getLongitude() + " ");
-                latitude = location.getLatitude();
-                longitude = location.getLongitude();
-                Log.d(TAG, "getLocation: " + "latitude: " + location.getLatitude() + " longitude: " + location.getLongitude());
-                registerLocationChangeListener();
+                else{
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000, 0, this);
+                }
             }
         }
     }
@@ -381,53 +440,14 @@ public class HomeActivity extends DaggerAppCompatActivity
     @Override
     protected void onPause() {
         super.onPause();
+        locationManager.removeUpdates(this);
         unregisterNetworkChangeListener();
     }
 
+
     /**
-     * Function to keep track of user location changes
+     * Functions for sending weekly overview data to the bottom sheet dialog
      */
-    @Override
-    public void registerLocationChangeListener() {
-        LocationListener locationChangeListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                Log.d(TAG, "onLocationChanged: location changed ");
-                latitude = location.getLatitude();
-                longitude = location.getLongitude();
-                initObserver();
-                initWeeklyObserver();
-            }
-
-            @Override
-            public void onStatusChanged(String s, int i, Bundle bundle) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String s) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String s) {
-
-            }
-        };
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //      ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 80, locationChangeListener);
-    }
-
     @Override
     public Double getMonday() {
         return mMonday;
@@ -468,6 +488,7 @@ public class HomeActivity extends DaggerAppCompatActivity
         return mUnits;
     }
 
+
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if(key.equals(getString(R.string.preference_list_key))){
@@ -476,41 +497,88 @@ public class HomeActivity extends DaggerAppCompatActivity
         else{
             mNotificationSwitch = sharedPreferences.getBoolean(key, Boolean.parseBoolean(getString(R.string.notification_preference_default_value)));
         }
-        displayToast(mUnits);
-        displayToast(Boolean.toString(mNotificationSwitch));
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
 
-                initObserver();
-                initWeeklyObserver();
-                serviceInitializer();
+        mWeatherViewModel.changeParams(latitude, longitude, mUnits);
+        mWeeklyWeatherViewModel.changeWeeklyParams(latitude, longitude, mUnits);
+
+        if(mNotificationSwitch){
+            setNotificationAlarm();
+        }
+        else{
+            cancelNotificationAlarm();
+        }
+
+        Log.d(TAG, "onSharedPreferenceChanged: called changes "+ mUnits + " , "+ mNotificationSwitch);
+
+
+    }
+
+    /**
+     * Function to create a Job service for sending timely notifications locally (with the help of a broadcast receiver and alarm manager)
+     * The alarm is displayed at approx 9 am daily (time is not 100% exact)
+     */
+    public void setNotificationAlarm(){
+
+        if(alarmManager == null){
+            alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        }
+
+
+            alarmIntent = new Intent(this, WeatherNotificationReceiver.class);
+            alarmIntent.putExtra(UNITS_FLAG, mUnits);
+            alarmIntent.putExtra(JOB_FLAG, mNotificationSwitch);
+            pendingIntent = PendingIntent.getBroadcast(this, PENDING_INTENT_REQUEST_CODE, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+            Log.d(TAG, "setNotificationAlarm: creatorUid - " + pendingIntent.getCreatorUid());
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(System.currentTimeMillis());
+            calendar.set(Calendar.HOUR_OF_DAY, 10);
+            calendar.set(Calendar.MINUTE, 30);
+            calendar.set(Calendar.SECOND, 0);
+
+            assert alarmManager != null;
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+
+
+    }
+
+    public void cancelNotificationAlarm(){
+        AlarmManager cancelAlarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        if (pendingIntent != null) {
+            PendingIntent cancelPendingIntent = PendingIntent.getBroadcast(this, PENDING_INTENT_REQUEST_CODE, alarmIntent, PendingIntent.FLAG_NO_CREATE);
+            if(cancelAlarmManager != null && pendingIntent != null) {
+                Log.d(TAG, "cancelNotificationAlarm: cancelling for sure");
+                alarmManager.cancel(cancelPendingIntent);
             }
-        }, 2500);
+        }
+
     }
 
-    public void serviceInitializer(){
-        PersistableBundle bundle = new PersistableBundle();
-        bundle.putBoolean(JOB_FLAG, mNotificationSwitch);
-        bundle.putString(UNITS_FLAG, mUnits);
+    @Override
+    public void onLocationChanged(Location location) {
+        locationManager.removeUpdates(this);
+        Log.d(TAG, "onLocationChanged: onLocationChanged");
 
-        ComponentName serviceComponent = new ComponentName(this, NotificationService.class);
-        JobInfo jobInfo = new JobInfo.Builder(1, serviceComponent)
-                .setPersisted(true)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setExtras(bundle)
-                .setPeriodic(15*60*1000)
-                .build();
+        latitude = location.getLatitude();
+        longitude = location.getLongitude();
 
-        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
-        assert jobScheduler != null;
-        int schedulerCode = jobScheduler.schedule(jobInfo);
-        if(schedulerCode == JobScheduler.RESULT_SUCCESS){
-            Log.d(TAG, "serviceInitializer: service success");
-        }
-        else if(schedulerCode == JobScheduler.RESULT_FAILURE){
-            Log.d(TAG, "serviceInitializer: service failed");
-        }
+        mWeatherViewModel.changeParams(latitude, longitude, mUnits);
+        mWeeklyWeatherViewModel.changeWeeklyParams(latitude, longitude, mUnits);
     }
 
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
+    }
 }

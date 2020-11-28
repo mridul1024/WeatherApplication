@@ -51,6 +51,7 @@ public class WeeklyRepository {
                 else{
                     Log.d(TAG, "onChanged: Weekly data- "+ dataModelWeeklyDataState.getData());
                     mDataModelWeekly.setValue(dataModelWeeklyDataState.getData());
+                    mDataModelWeekly.removeSource(weeklySource);
                 }
             }
         });

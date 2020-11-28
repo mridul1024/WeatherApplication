@@ -26,4 +26,8 @@ public class WeeklyWeatherViewModel extends ViewModel {
     public void loadWeeklyData(Double lat, Double lon, String unit){
         mWeeklyData = mWeeklyRepository.fetchWeeklyData(lat,lon, unit);
     }
+
+    public void changeWeeklyParams(double lat, double lon, String metric){
+        loadWeeklyData(lat, lon, metric);
+    }
 }

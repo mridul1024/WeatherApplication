@@ -2,7 +2,10 @@ package com.example.weatherapplication.viewmodel;
 
 import android.util.Log;
 
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
 import com.example.weatherapplication.network.model.DataModel;
@@ -14,7 +17,7 @@ public class WeatherViewModel extends ViewModel {
     private static final String TAG = "WeatherViewModel";
 
     private Repository mRepository;
-    private LiveData<DataModel> data;
+    private MutableLiveData<DataModel> data;
 
     @Inject
     public WeatherViewModel(Repository repository){
@@ -30,4 +33,10 @@ public class WeatherViewModel extends ViewModel {
     public void loadData(double lat, double lon, String unit){
         data = mRepository.fetchData(lat, lon, unit);
     }
+
+    public void changeParams(double lat, double lon, String metric){
+        Log.d(TAG, "changeUnits: lat- "+lat+" lon- "+lon+" metric- "+ metric);
+        loadData(lat, lon, metric);
+    }
+
 }

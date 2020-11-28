@@ -80,4 +80,7 @@ dependencies {
     //Shared Preferences
     implementation 'androidx.preference:preference:1.0.0'
 
+    //For requesting permissions
+    implementation "androidx.activity:activity:1.2.0-alpha08"
+    implementation 'androidx.fragment:fragment:1.3.0-alpha08'
 }

@@ -7,7 +7,9 @@ import android.app.job.JobParameters;
 import android.app.job.JobService;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 
@@ -28,7 +30,8 @@ import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class NotificationService extends JobService {
+public class NotificationService extends JobService
+implements LocationListener {
 
     private static final String TAG = "NotificationService";
 
@@ -52,6 +55,8 @@ public class NotificationService extends JobService {
     private boolean jobSwitch = false;
     private LiveData<DataModel> data;
     private MediatorLiveData<DataModel> mediatorData;
+
+    private LocationManager locationManager;
 
     @Override
     public boolean onStartJob(JobParameters jobParameters) {
@@ -89,6 +94,8 @@ public class NotificationService extends JobService {
 
         jobSwitch = params.getExtras().getBoolean(JOB_FLAG);
         String units = params.getExtras().getString(UNITS_FLAG);
+        Log.d(TAG, "performNotificationTask: unit - "+ units);
+        Log.d(TAG, "performNotificationTask: switch -"+ jobSwitch);
         if (jobSwitch) {
             Retrofit mRetrofit = new Retrofit.Builder()
                     .baseUrl("http://api.openweathermap.org/data/2.5/")
@@ -124,6 +131,7 @@ public class NotificationService extends JobService {
 
                             sendNotification("The temperature is "+ dataModel.getMain().getTempMax() + appendUnit);
                             Log.d(TAG, "onChanged: data ="+ dataModel.getMain().getTempMax());
+                            onStopJob(params);
                          }
                      });
                 }
@@ -135,7 +143,7 @@ public class NotificationService extends JobService {
     }
 
     public void getLocationCoordinates() {
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -150,12 +158,37 @@ public class NotificationService extends JobService {
         assert locationManager != null;
         Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-        if(location!=null){
+        if(location == null){
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, this);
+
+        }
+
+        else{
             latitude = location.getLatitude();
             longitude = location.getLongitude();
-
-
             Log.d(TAG, "getLocationCoordinates: lat long: "+ latitude + " " + longitude);
         }
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        locationManager.removeUpdates(this);
+        latitude = location.getLatitude();
+        longitude = location.getLongitude();
+    }
+
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
     }
 }

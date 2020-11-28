@@ -54,8 +54,9 @@ public class Repository {
                     Log.d(TAG, "Error: "+dataModelDataState.getError().getLocalizedMessage());
                 }
                 else{
-                    Log.d(TAG, "onChanged: data -" + dataModelDataState.getData());
+                    Log.d(TAG, "onChanged: data -" + dataModelDataState.getData().getMain().getTemp());
                     mDataModel.setValue(dataModelDataState.getData());
+                    mDataModel.removeSource(source);
                 }
             }
         });
