@@ -10,4 +10,7 @@ Application which fetches weather details from OpenWeather api
 - Detects current user location
 - Shared Preferences for settings module
 
+#General workflow
+![](20201208_014628.gif)
+
 
